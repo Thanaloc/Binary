@@ -13,10 +13,30 @@ MonoBehaviour:
   m_Name: MainCharacter
   m_EditorClassIdentifier: 
   CharacterName: Bit
+  GroundLayer:
+    serializedVersion: 2
+    m_Bits: 64
   MaxHealth: 100
-  MaxSpeed: 12
-  JumpHeight: 28
-  Mass: 8
-  IsGrounded: 0
-  CanJump: 0
   Identity: 2
+  HeadDetectionRayLenght: 0.2
+  HeadWidth: 0.75
+  IsGrounded: 1
+  IsFacingRight: 0
+  MaxSpeed: 18.5
+  GroundedAccel: 5
+  GroundedDeccel: 20
+  AirAccel: 5
+  AirDeccel: 5
+  JumpHeight: 22.69
+  CoyoteTime: 0.1
+  BufferTime: 0.125
+  WallJumpTime: 1
+  JumpHeightCompensFactor: 1.054
+  GravityOnReleaseMultipl: 2
+  TimeTillJumpApex: 0.35
+  MaxFallSpeed: 26
+  NumberOfJumps: 2
+  TimeForUpwardsCancel: 0.027
+  ApexThreshold: 0.97
+  ApexHangTime: 0.075
+  GroundDetectionRayLenght: 0.023
