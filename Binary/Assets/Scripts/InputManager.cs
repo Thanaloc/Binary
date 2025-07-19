@@ -28,10 +28,15 @@ public class InputManager : MonoBehaviour
     private void Update()
     {
         Movement = _moveAction.ReadValue<Vector2>();
-
         JumpIsHeld = _jumpAction.IsPressed();
 
-        Debug.Log("hi " + JumpWasPressed + "  " + JumpIsHeld + "   " + JumpWasReleased);
+    }
+
+    private void LateUpdate()
+    {
+        // Reset les états après que tous les scripts les aient lus
+        JumpWasPressed = false;
+        JumpWasReleased = false;
     }
 
     private void OnEnable()
@@ -58,7 +63,6 @@ public class InputManager : MonoBehaviour
             JumpWasPressed = true;
             JumpWasReleased = false;
         }
-
         else if (p_ctx.canceled)
         {
             JumpWasPressed = false;

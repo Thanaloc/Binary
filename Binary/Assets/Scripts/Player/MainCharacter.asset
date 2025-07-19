@@ -21,22 +21,22 @@ MonoBehaviour:
   HeadDetectionRayLenght: 0.2
   HeadWidth: 0.75
   IsGrounded: 1
-  IsFacingRight: 0
-  MaxSpeed: 18.5
-  GroundedAccel: 5
+  IsFacingRight: 1
+  MaxSpeed: 21
+  GroundedAccel: 10
   GroundedDeccel: 20
   AirAccel: 5
-  AirDeccel: 5
-  JumpHeight: 22.69
+  AirDeccel: 2
+  JumpHeight: 18
   CoyoteTime: 0.1
   BufferTime: 0.125
   WallJumpTime: 1
   JumpHeightCompensFactor: 1.054
   GravityOnReleaseMultipl: 2
-  TimeTillJumpApex: 0.35
-  MaxFallSpeed: 26
+  TimeTillJumpApex: 0.4
+  MaxFallSpeed: 45
   NumberOfJumps: 2
   TimeForUpwardsCancel: 0.027
-  ApexThreshold: 0.97
-  ApexHangTime: 0.075
-  GroundDetectionRayLenght: 0.023
+  ApexThreshold: 0.9
+  ApexHangTime: 0.04
+  GroundDetectionRayLenght: 0.15

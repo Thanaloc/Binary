@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -43,17 +44,22 @@ public class CharacterMovement : MonoBehaviour
 
     private bool _bumpHead;
 
+    public Action<bool> JumpAction;
+    public Action<bool> MoveAction;
+
     #endregion
 
     private void Awake()
     {
         _CharacterIdentity.IsFacingRight = true;
+        VerticalVelocity = 0f;
     }
 
     void Update()
     {
         CountTimers();
         JumpChecks();
+        ResetSceneCheck();
     }
 
     void FixedUpdate()
@@ -65,30 +71,43 @@ public class CharacterMovement : MonoBehaviour
         {
             Run(_CharacterIdentity.GroundedAccel, _CharacterIdentity.GroundedDeccel);
         }
-
         else
         {
             Run(_CharacterIdentity.AirAccel, _CharacterIdentity.AirDeccel);
         }
     }
 
+    #region Debug
+
+    private void ResetSceneCheck()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+    }
+
+    #endregion
+
     #region Movements
     private void Run(float p_accel, float p_deccel)
     {
         if (InputManager.Movement != Vector2.zero)
         {
+            MoveAction?.Invoke(true);
+
             TurnCheck();
 
             _targetSpeed = Vector2.zero;
-
             _targetSpeed = new Vector2(InputManager.Movement.x, 0f) * _CharacterIdentity.MaxSpeed;
 
             _moveVelocity = Vector2.Lerp(_moveVelocity, _targetSpeed, p_accel * Time.fixedDeltaTime);
             _Rigidbody.linearVelocity = new Vector2(_moveVelocity.x, _Rigidbody.linearVelocity.y);
         }
-
         else if (InputManager.Movement == Vector2.zero)
         {
+            MoveAction?.Invoke(false);
+
             _moveVelocity = Vector2.Lerp(_moveVelocity, Vector2.zero, p_deccel * Time.fixedDeltaTime);
             _Rigidbody.linearVelocity = new Vector2(_moveVelocity.x, _Rigidbody.linearVelocity.y);
         }
@@ -100,7 +119,6 @@ public class CharacterMovement : MonoBehaviour
         {
             Turn(false);
         }
-
         else if (!_CharacterIdentity.IsFacingRight && InputManager.Movement.x > 0)
         {
             Turn(true);
@@ -114,7 +132,6 @@ public class CharacterMovement : MonoBehaviour
             _CharacterIdentity.IsFacingRight = true;
             transform.Rotate(0f, 180f, 0f);
         }
-
         else
         {
             _CharacterIdentity.IsFacingRight = false;
@@ -136,30 +153,29 @@ public class CharacterMovement : MonoBehaviour
 
         if (InputManager.JumpWasReleased)
         {
-            if (_jumpBufferTimer > 0)
-            {
-                _jumpReleaseDuringBuffer = true;
-            }
+            //if (_jumpBufferTimer > 0)
+            //{
+            //    _jumpReleaseDuringBuffer = true;
+            //}
 
-            if (_isJumping && VerticalVelocity > 0f)
-            {
-                if (_isPastApexThreshold)
-                {
-                    _isPastApexThreshold = false;
-                    _isFastFalling = true;
-                    _fastFallTime = _CharacterIdentity.TimeForUpwardsCancel;
-                    VerticalVelocity = 0;
-                }
-
-                else
-                {
-                    _isFastFalling = true;
-                    _fastFallReleaseSpeed = VerticalVelocity;
-                }
-            }
+            //if (_isJumping && VerticalVelocity > 0f)
+            //{
+            //    if (_isPastApexThreshold)
+            //    {
+            //        _isPastApexThreshold = false;
+            //        _isFastFalling = true;
+            //        _fastFallTime = _CharacterIdentity.TimeForUpwardsCancel;
+            //        VerticalVelocity = 0;
+            //    }
+            //    else
+            //    {
+            //        _isFastFalling = true;
+            //        _fastFallReleaseSpeed = VerticalVelocity;
+            //    }
+            //}
         }
 
-        if (_jumpBufferTimer > 0 && !_isJumping && (_CharacterIdentity.IsGrounded || _coyoteTimer > 0))
+        if (_jumpBufferTimer > 0 && (_CharacterIdentity.IsGrounded || _coyoteTimer > 0) && _numberOfJumpsUsed == 0)
         {
             InitiateJump(1);
 
@@ -169,21 +185,15 @@ public class CharacterMovement : MonoBehaviour
                 _fastFallReleaseSpeed = VerticalVelocity;
             }
         }
+        // Double saut en l'air
         else if (_jumpBufferTimer > 0 && _isJumping && _numberOfJumpsUsed < _CharacterIdentity.NumberOfJumps)
         {
             _isFastFalling = false;
             InitiateJump(1);
         }
 
-        else if (_jumpBufferTimer > 0 && _isFalling && _numberOfJumpsUsed < _CharacterIdentity.NumberOfJumps - 1)
-        {
-            InitiateJump(2);
-            _isFastFalling = false;
-        }
-
-        //landing
-
-        if ((_isJumping || _isFalling) && _CharacterIdentity.IsGrounded && VerticalVelocity <= 0)
+        //Atterrissage
+        if (_CharacterIdentity.IsGrounded && VerticalVelocity <= 0 && (_isJumping || _isFalling))
         {
             _isJumping = false;
             _isFalling = false;
@@ -191,39 +201,35 @@ public class CharacterMovement : MonoBehaviour
             _fastFallTime = 0;
             _isPastApexThreshold = false;
             _numberOfJumpsUsed = 0;
-
             VerticalVelocity = Physics2D.gravity.y;
         }
-
     }
 
     private void InitiateJump(int p_numberOfJumpsUsed)
     {
-        if (!_isJumping)
-        {
-            _isJumping = true;
-        }
-
+        _isJumping = true;
+        _isFalling = false;
         _jumpBufferTimer = 0;
         _numberOfJumpsUsed += p_numberOfJumpsUsed;
         VerticalVelocity = _CharacterIdentity.InitialJumpVelocity;
+
     }
 
     private void Jump()
     {
-        //apply grav
+        // Physique du saut
         if (_isJumping)
         {
-            //check head bump
+            // Vérification collision tête
             if (_bumpHead)
             {
                 _isFastFalling = true;
             }
 
-            //gravity on asending
+            // Gravité en montée
             if (VerticalVelocity >= 0)
             {
-                //apex controls
+                // Contrôles de l'apex
                 _apexPoint = Mathf.InverseLerp(_CharacterIdentity.InitialJumpVelocity, 0, VerticalVelocity);
 
                 if (_apexPoint > _CharacterIdentity.ApexThreshold)
@@ -241,14 +247,12 @@ public class CharacterMovement : MonoBehaviour
                         {
                             VerticalVelocity = 0;
                         }
-
                         else
                         {
-                            VerticalVelocity = -.01f;
+                            VerticalVelocity = -0.01f;
                         }
                     }
                 }
-
                 else
                 {
                     VerticalVelocity += _CharacterIdentity.Gravity * Time.fixedDeltaTime;
@@ -259,12 +263,12 @@ public class CharacterMovement : MonoBehaviour
                 }
             }
 
-            //grav on desending
             else if (!_isFastFalling)
             {
-                VerticalVelocity += _CharacterIdentity.Gravity * _CharacterIdentity.GravityOnReleaseMultipl * Time.fixedDeltaTime;
+                VerticalVelocity += _CharacterIdentity.Gravity /* * _CharacterIdentity.GravityOnReleaseMultipl*/ * Time.fixedDeltaTime;
             }
 
+            // Gravité en descente
             else if (VerticalVelocity < 0)
             {
                 if (!_isFalling)
@@ -274,26 +278,25 @@ public class CharacterMovement : MonoBehaviour
             }
         }
 
-        //jump cut
-        if (_isFastFalling)
-        {
-            if (_fastFallTime >= _CharacterIdentity.TimeForUpwardsCancel)
-            {
-                VerticalVelocity += _CharacterIdentity.Gravity * _CharacterIdentity.GravityOnReleaseMultipl * Time.fixedDeltaTime;
-            }
+        // Fast fall
+        //if (_isFastFalling)
+        //{
+        //    if (_fastFallTime >= _CharacterIdentity.TimeForUpwardsCancel)
+        //    {
+        //        VerticalVelocity += _CharacterIdentity.Gravity * _CharacterIdentity.GravityOnReleaseMultipl * Time.fixedDeltaTime;
+        //    }
+        //    else if (_fastFallTime < _CharacterIdentity.TimeForUpwardsCancel)
+        //    {
+        //        VerticalVelocity = Mathf.Lerp(_fastFallReleaseSpeed, 0, (_fastFallTime / _CharacterIdentity.TimeForUpwardsCancel));
+        //    }
 
-            else if (_fastFallTime < _CharacterIdentity.TimeForUpwardsCancel)
-            {
-                VerticalVelocity = Mathf.Lerp(_fastFallReleaseSpeed, 0, (_fastFallTime / _CharacterIdentity.TimeForUpwardsCancel));
-            }
+        //    _fastFallTime += Time.fixedDeltaTime;
+        //}
 
-            _fastFallTime += Time.fixedDeltaTime;
-        }
-
-        //normal grav while falling
+        // Gravité normale en chute
         if (!_CharacterIdentity.IsGrounded && !_isJumping)
         {
-            if(!_isFalling)
+            if (!_isFalling)
             {
                 _isFalling = true;
             }
@@ -301,7 +304,7 @@ public class CharacterMovement : MonoBehaviour
             VerticalVelocity += _CharacterIdentity.Gravity * Time.fixedDeltaTime;
         }
 
-        //clamp fall speed
+        // Limiter la vitesse de chute
         VerticalVelocity = Mathf.Clamp(VerticalVelocity, -_CharacterIdentity.MaxFallSpeed, 50f);
 
         _Rigidbody.linearVelocity = new Vector2(_Rigidbody.linearVelocity.x, VerticalVelocity);
@@ -313,34 +316,48 @@ public class CharacterMovement : MonoBehaviour
 
     private void GroundCheck()
     {
-        Vector2 boxCastOrigin = new Vector2(_CharacterColliderForGroundChecking.bounds.center.x, _CharacterColliderForGroundChecking.bounds.min.y);
-        Vector2 boxCastSize = new Vector2(_CharacterColliderForGroundChecking.bounds.size.x, _CharacterIdentity.GroundDetectionRayLenght);
+        Vector2 boxCastOrigin = new Vector2(_CharacterColliderForGroundChecking.bounds.center.x,
+                                           _CharacterColliderForGroundChecking.bounds.min.y + 0.01f);
 
-        _groundHit = Physics2D.BoxCast(boxCastOrigin, boxCastSize, 0f, Vector2.down, _CharacterIdentity.GroundDetectionRayLenght, _CharacterIdentity.GroundLayer);
+        Vector2 boxCastSize = new Vector2(_CharacterColliderForGroundChecking.bounds.size.x * 0.9f,
+                                         _CharacterIdentity.GroundDetectionRayLenght);
+
+        _groundHit = Physics2D.BoxCast(boxCastOrigin, boxCastSize, 0f, Vector2.down,
+                                      _CharacterIdentity.GroundDetectionRayLenght, _CharacterIdentity.GroundLayer);
+
+        //Color debugColor = _groundHit.collider != null ? Color.green : Color.red;
+        //Debug.DrawRay(boxCastOrigin, Vector2.down * _CharacterIdentity.GroundDetectionRayLenght, debugColor, 0.1f);
 
         if (_groundHit.collider != null)
         {
+            JumpAction?.Invoke(false);
             _CharacterIdentity.IsGrounded = true;
         }
-
         else
+        {
+            JumpAction?.Invoke(true);
             _CharacterIdentity.IsGrounded = false;
+        }
     }
 
     private void BumpedHeadCheck()
     {
-        Vector2 boxCastOrigin = new Vector2(_CharacterColliderForGroundChecking.bounds.center.x, _CharacterColliderForGroundChecking.bounds.min.y);
-        Vector2 boxCastSize = new Vector2(_CharacterColliderForGroundChecking.bounds.size.x * _CharacterIdentity.HeadWidth, _CharacterIdentity.HeadDetectionRayLenght);
+        Vector2 boxCastOrigin = new Vector2(_CharacterColliderForGroundChecking.bounds.center.x,
+                                           _CharacterColliderForGroundChecking.bounds.max.y);
+        Vector2 boxCastSize = new Vector2(_CharacterColliderForGroundChecking.bounds.size.x * _CharacterIdentity.HeadWidth,
+                                         _CharacterIdentity.HeadDetectionRayLenght);
 
-        _groundHit = Physics2D.BoxCast(boxCastOrigin, boxCastSize, 0f, Vector2.up, _CharacterIdentity.HeadDetectionRayLenght, _CharacterIdentity.GroundLayer);
+        _groundHit = Physics2D.BoxCast(boxCastOrigin, boxCastSize, 0f, Vector2.up,
+                                      _CharacterIdentity.HeadDetectionRayLenght, _CharacterIdentity.GroundLayer);
 
-        if (_groundHit.collider != null)
+        if (_groundHit.collider != null && !_bumpHead)
         {
             _bumpHead = true;
         }
-
-        else
+        else if (_groundHit.collider == null && _bumpHead)
+        {
             _bumpHead = false;
+        }
     }
 
     private void CollisionChecks()
@@ -361,9 +378,10 @@ public class CharacterMovement : MonoBehaviour
         {
             _coyoteTimer -= Time.deltaTime;
         }
-
         else
+        {
             _coyoteTimer = _CharacterIdentity.CoyoteTime;
+        }
     }
 
     #endregion
