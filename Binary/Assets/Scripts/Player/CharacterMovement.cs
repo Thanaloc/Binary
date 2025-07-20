@@ -12,6 +12,7 @@ public class CharacterMovement : MonoBehaviour
     [SerializeField] private Rigidbody2D _Rigidbody;
     [SerializeField] private BoxCollider2D _CharacterColliderForGroundChecking;
     [SerializeField] private PlayerSO _CharacterIdentity;
+    [SerializeField] private PlayerController _PlayerController;
     [SerializeField] private InputActionReference _MoveInputs;
 
     [SerializeField] private BoxCollider2D _DeathCollider;
@@ -51,7 +52,7 @@ public class CharacterMovement : MonoBehaviour
 
     private void Awake()
     {
-        _CharacterIdentity.IsFacingRight = true;
+        _PlayerController.IsFacingRight = true;
         VerticalVelocity = 0f;
     }
 
@@ -67,7 +68,7 @@ public class CharacterMovement : MonoBehaviour
         CollisionChecks();
         Jump();
 
-        if (_CharacterIdentity.IsGrounded)
+        if (_PlayerController.IsGrounded)
         {
             Run(_CharacterIdentity.GroundedAccel, _CharacterIdentity.GroundedDeccel);
         }
@@ -115,11 +116,11 @@ public class CharacterMovement : MonoBehaviour
 
     private void TurnCheck()
     {
-        if (_CharacterIdentity.IsFacingRight && InputManager.Movement.x < 0)
+        if (_PlayerController.IsFacingRight && InputManager.Movement.x < 0)
         {
             Turn(false);
         }
-        else if (!_CharacterIdentity.IsFacingRight && InputManager.Movement.x > 0)
+        else if (!_PlayerController.IsFacingRight && InputManager.Movement.x > 0)
         {
             Turn(true);
         }
@@ -129,12 +130,12 @@ public class CharacterMovement : MonoBehaviour
     {
         if (p_turnRight)
         {
-            _CharacterIdentity.IsFacingRight = true;
+            _PlayerController.IsFacingRight = true;
             transform.Rotate(0f, 180f, 0f);
         }
         else
         {
-            _CharacterIdentity.IsFacingRight = false;
+            _PlayerController.IsFacingRight = false;
             transform.Rotate(0f, -180f, 0f);
         }
     }
@@ -145,6 +146,9 @@ public class CharacterMovement : MonoBehaviour
 
     void JumpChecks()
     {
+        if (!_PlayerController.CanJump)
+            return;
+        
         if (InputManager.JumpWasPressed)
         {
             _jumpBufferTimer = _CharacterIdentity.BufferTime;
@@ -175,7 +179,7 @@ public class CharacterMovement : MonoBehaviour
             //}
         }
 
-        if (_jumpBufferTimer > 0 && (_CharacterIdentity.IsGrounded || _coyoteTimer > 0) && _numberOfJumpsUsed == 0)
+        if (_jumpBufferTimer > 0 && (_PlayerController.IsGrounded || _coyoteTimer > 0) && _numberOfJumpsUsed == 0)
         {
             InitiateJump(1);
 
@@ -193,7 +197,7 @@ public class CharacterMovement : MonoBehaviour
         }
 
         //Atterrissage
-        if (_CharacterIdentity.IsGrounded && VerticalVelocity <= 0 && (_isJumping || _isFalling))
+        if (_PlayerController.IsGrounded && VerticalVelocity <= 0 && (_isJumping || _isFalling))
         {
             _isJumping = false;
             _isFalling = false;
@@ -294,7 +298,7 @@ public class CharacterMovement : MonoBehaviour
         //}
 
         // Gravité normale en chute
-        if (!_CharacterIdentity.IsGrounded && !_isJumping)
+        if (!_PlayerController.IsGrounded && !_isJumping)
         {
             if (!_isFalling)
             {
@@ -331,12 +335,12 @@ public class CharacterMovement : MonoBehaviour
         if (_groundHit.collider != null)
         {
             JumpAction?.Invoke(false);
-            _CharacterIdentity.IsGrounded = true;
+            _PlayerController.IsGrounded = true;
         }
         else
         {
             JumpAction?.Invoke(true);
-            _CharacterIdentity.IsGrounded = false;
+            _PlayerController.IsGrounded = false;
         }
     }
 
@@ -374,7 +378,7 @@ public class CharacterMovement : MonoBehaviour
     {
         _jumpBufferTimer -= Time.deltaTime;
 
-        if (!_CharacterIdentity.IsGrounded)
+        if (!_PlayerController.IsGrounded)
         {
             _coyoteTimer -= Time.deltaTime;
         }

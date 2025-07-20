@@ -14,8 +14,6 @@ public class PlayerSO : ScriptableObject
     [Range(0, 1f)] public float HeadWidth = .75f;
 
     [Header("Speed Related")]
-    public bool IsGrounded;
-    public bool IsFacingRight;
     [Range(1f, 50)] public float MaxSpeed;
     [Range(1f, 50)] public float GroundedAccel;
     [Range(1f, 50)] public float GroundedDeccel;
@@ -39,6 +37,7 @@ public class PlayerSO : ScriptableObject
 
     [Header("Physics Related")]
     [Range(0f, 1)] public float GroundDetectionRayLenght;
+
 
     public float Gravity { get; private set; }
     public float InitialJumpVelocity { get; private set; }
