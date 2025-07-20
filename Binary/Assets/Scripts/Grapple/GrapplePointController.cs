@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class GrapplePointController : MonoBehaviour
 {
-    [SerializeField] private SpriteRenderer _UI;
+    [SerializeField] private GameObject _UI;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -25,6 +25,6 @@ public class GrapplePointController : MonoBehaviour
 
     private void ShowHideUI(bool p_show)
     {
-        _UI.enabled = p_show;
+        _UI.SetActive(p_show);
     }
 }
