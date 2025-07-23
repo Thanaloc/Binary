@@ -1651,7 +1651,7 @@ MonoBehaviour:
   _Damping: 0.98
   _ConstraintIterations: 3
   _LaunchSpeed: 20
-  _LaunchDuration: 0.3
+  _LaunchDuration: 0.1
   _LaunchCurve:
     serializedVersion: 2
     m_Curve:

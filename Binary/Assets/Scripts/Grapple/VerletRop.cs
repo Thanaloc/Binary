@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 public class VerletRop : MonoBehaviour
@@ -52,9 +53,8 @@ public class VerletRop : MonoBehaviour
     private bool _isDestroying = false;
     private Vector2 _launchTarget;
     private Vector2 _launchStart;
-
-
-    //TODO setup line renderer in inspector and particle systm
+    private float _launchTimer = 0f;
+    private bool _simulationActive = false; // Contrôle si la simulation physique est active
 
     /// <summary>
     /// Créer une corde entre le joueur et un point d'ancrage
@@ -64,8 +64,6 @@ public class VerletRop : MonoBehaviour
         _launchStart = playerPosition;
         _launchTarget = anchorPoint;
 
-        //Todo animation
-
         _ropePoints.Clear();
 
         float totalDistance = Vector2.Distance(playerPosition, anchorPoint);
@@ -73,7 +71,6 @@ public class VerletRop : MonoBehaviour
 
         Vector2 direction = (anchorPoint - playerPosition).normalized;
 
-        // Créer les points de la corde
         for (int i = 0; i <= _SegmentCount; i++)
         {
             Vector2 pointPosition = playerPosition + direction * (_actualSegmentLength * i);
@@ -89,6 +86,61 @@ public class VerletRop : MonoBehaviour
         }
 
         _isActive = true;
+        _isLaunching = true;
+        _simulationActive = false;
+        _launchTimer = 0f;
+
+        StartCoroutine(AnimateRopeAppearance());
+    }
+
+    /// <summary>
+    /// Animation progressive d'apparition de la corde
+    /// </summary>
+    private IEnumerator AnimateRopeAppearance()
+    {
+        while (_launchTimer < _LaunchDuration && _isActive)
+        {
+            _launchTimer += Time.deltaTime;
+            float progress = _LaunchCurve.Evaluate(_launchTimer / _LaunchDuration);
+
+            float targetDistance = Vector2.Distance(_launchStart, _launchTarget);
+            float currentDistance = targetDistance * progress;
+
+            Vector2 direction = (_launchTarget - _launchStart).normalized;
+
+            for (int i = 0; i < _ropePoints.Count; i++)
+            {
+                float segmentDistance = _actualSegmentLength * i;
+
+                if (segmentDistance <= currentDistance)
+                {
+                    Vector2 targetPos = _launchStart + direction * segmentDistance;
+                    _ropePoints[i].Position = targetPos;
+                    _ropePoints[i].OldPosition = targetPos;
+                }
+                else
+                {
+                    Vector2 lastVisiblePos = _launchStart + direction * currentDistance;
+                    _ropePoints[i].Position = lastVisiblePos;
+                    _ropePoints[i].OldPosition = lastVisiblePos;
+                }
+            }
+
+            UpdateLineRenderer();
+
+            yield return null;
+        }
+
+        _isLaunching = false;
+        _simulationActive = true;
+
+        Vector2 direction_final = (_launchTarget - _launchStart).normalized;
+        for (int i = 0; i < _ropePoints.Count; i++)
+        {
+            Vector2 finalPos = _launchStart + direction_final * (_actualSegmentLength * i);
+            _ropePoints[i].Position = finalPos;
+            _ropePoints[i].OldPosition = finalPos;
+        }
     }
 
     /// <summary>
@@ -96,8 +148,11 @@ public class VerletRop : MonoBehaviour
     /// </summary>
     public void DestroyRope()
     {
+        StopAllCoroutines(); 
         _ropePoints.Clear();
         _isActive = false;
+        _isLaunching = false;
+        _simulationActive = false;
 
         if (LineRendererComponent != null)
             LineRendererComponent.enabled = false;
@@ -108,7 +163,7 @@ public class VerletRop : MonoBehaviour
     /// </summary>
     public void UpdatePlayerPosition(Vector2 playerPos)
     {
-        if (_ropePoints.Count > 0)
+        if (_ropePoints.Count > 0 && _simulationActive)
         {
             _ropePoints[0].Position = playerPos;
             _ropePoints[0].OldPosition = playerPos;
@@ -149,7 +204,8 @@ public class VerletRop : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!_isActive || _ropePoints.Count == 0) return;
+        if (!_isActive || _ropePoints.Count == 0 || !_simulationActive) 
+            return;
 
         SimulateVerlet();
         ApplyConstraints();
@@ -160,7 +216,7 @@ public class VerletRop : MonoBehaviour
     {
         float deltaTime = Time.fixedDeltaTime;
 
-        for (int i = 1; i < _ropePoints.Count - 1; i++) // Ignorer le premier (joueur) et dernier (ancrage)
+        for (int i = 1; i < _ropePoints.Count - 1; i++) 
         {
             Vector2 temp = _ropePoints[i].Position;
             Vector2 acceleration = Vector2.down * _Gravity;
