@@ -64,10 +64,10 @@ public class GrappleAbility : Ability
             Activate();
         }
 
-        if (InputManager.GrappleWasReleased && _isGrappling) //Maybe to change condition, like timerelated
-        {
-            Cancel();
-        }
+        //if (InputManager.GrappleWasReleased && _isGrappling) //Maybe to change condition, like timerelated
+        //{
+        //    Cancel();
+        //}
     }
     public override void Activate()
     {
@@ -118,7 +118,7 @@ public class GrappleAbility : Ability
 
         Debug.DrawLine(startPos, _objectToGrapple.transform.position, Color.red, GRAPPLE_DURATION);
 
-       
+
         Cancel();
     }
 
