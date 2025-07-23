@@ -93,6 +93,9 @@ public class CharacterMovement : MonoBehaviour
     #region Movements
     private void Run(float p_accel, float p_deccel)
     {
+        //if (_PlayerController.IsUsingSpecialMovementAbility) //in case of me wanting to have different movement based in the grappling situation
+        //    return; 
+
         if (InputManager.Movement != Vector2.zero)
         {
             MoveAction?.Invoke(true);

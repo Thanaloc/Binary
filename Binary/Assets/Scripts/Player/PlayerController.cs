@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     public bool CanGrapple;
     public bool IsFacingRight;
     public bool CanJump = true;
+    public bool IsUsingSpecialMovementAbility = false;
 
     public Ability GetAbilityController(string p_abilityId)
     {

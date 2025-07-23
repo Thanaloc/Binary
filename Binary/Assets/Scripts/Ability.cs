@@ -6,6 +6,7 @@ public abstract class Ability : MonoBehaviour
     [SerializeField] private string _AbilityId;
 
     [SerializeField] private PlayerController _PlayerController;
+    [SerializeField] private CharacterMovement __PlayerMovement;
     [SerializeField] private PlayerSO _PlayerIdentity;
 
     public int Charges;

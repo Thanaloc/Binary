@@ -4,13 +4,14 @@ using UnityEngine.UI;
 public class GrapplePointController : MonoBehaviour
 {
     [SerializeField] private GameObject _UI;
+    [SerializeField] private GameObject _GrapplePointGO;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
         {
             ShowHideUI(true);
-            PlayerEventsReceiver.Instance?.GrapplePointEvent(true, _UI.transform);//todo
+            PlayerEventsReceiver.Instance?.GrapplePointEvent(true, _GrapplePointGO.transform);//todo
         }
     }
 
