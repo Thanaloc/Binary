@@ -24,7 +24,7 @@ public class GrappleAbility : Ability
 
     private void Awake()
     {
-        CanBeCanceled = false;
+        //CanBeCanceled = false;
     }
 
     public void SetObjectToGrapple(Transform p_objectToGrapple)
@@ -64,10 +64,10 @@ public class GrappleAbility : Ability
             Activate();
         }
 
-        //if (InputManager.GrappleWasReleased && _isGrappling) //Maybe to change condition, like timerelated
-        //{
-        //    Cancel();
-        //}
+        else if (InputManager.GrappleWasPressed && _isGrappling) //Maybe to change condition, like timerelated
+        {
+            Cancel();
+        }
     }
     public override void Activate()
     {
@@ -80,9 +80,6 @@ public class GrappleAbility : Ability
 
         // Créer la corde Verlet
         _VerletRope.CreateRope(transform.position, _objectToGrapple.position);
-
-        // Modifier les propriétés du joueur pendant le grappin
-        PlayerController().CanJump = false;
     }
 
     public override void Cancel()

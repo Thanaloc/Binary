@@ -2029,7 +2029,7 @@ MonoBehaviour:
   _PlayerIdentity: {fileID: 11400000, guid: 7c27d7a423706de4d97da43b43137507, type: 2}
   Charges: 1
   Cooldown: 0
-  CanBeCanceled: 0
+  CanBeCanceled: 1
   _GrappleRange: 8
   _SwingForce: 12
   _PullForce: 20
